@@ -1,0 +1,143 @@
+﻿@model IEnumerable<MVCLabApplication.Models.Product>
+
+@{
+    ViewData["Title"] = "Lista produktów";
+}
+
+<h1>Lista produktów</h1>
+
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+
+<!-- Search box -->
+
+<label for="searchCriteria">Search by:</label>
+<select id="searchCriteria" class="form-control mb-3">
+    <option value="name">Name</option>
+    <option value="price">Price</option>
+    <option value="category">Category</option>
+</select>
+<input type="text" id="searchBox" placeholder="Search products..." class="form-control mb-3">
+
+<label for="sortOptions">Sortowanie:</label>
+<select id="sortOptions" class="form-control mb-3">
+    <option value="name_asc">Name (A - Z)</option>
+    <option value="name_desc">Name (Z - A)</option>
+    <option value="price_asc">Price (Low to High)</option>
+    <option value="price_desc">Price (High to Low)</option>
+</select>
+
+<table class="table" id="productsTable">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Name)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Price)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Category)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.Name)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Price)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Category.Name)
+            </td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.ProductId">Edit</a> |
+                <a asp-action="Details" asp-route-id="@item.ProductId">Details</a> |
+                <a asp-action="Delete" asp-route-id="@item.ProductId">Delete</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>
+
+
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        $(document).ready(function () {
+            $("#searchBox").on("keyup", function () {
+                var value = $(this).val().toLowerCase();
+                var criteria = $("#searchCriteria").val();
+
+                $("#productsTable tbody tr").filter(function () {
+                    var row = $(this);
+                    if (criteria == "name") {
+                        row.toggle(row.find("td:eq(0)").text().toLowerCase().indexOf(value) > -1);
+                    } else if (criteria == "price") {
+                        var price = parseFloat(row.find("td:eq(1)").text());
+                        if (value.startsWith(">")) {
+                            var searchPrice = parseFloat(value.slice(1));
+                            row.toggle(price > searchPrice);
+                        } else if (value.startsWith("<")) {
+                            var searchPrice = parseFloat(value.slice(1));
+                            row.toggle(price < searchPrice);
+                        } 
+                        else {
+                            row.toggle(row.find("td:eq(1)").text().toLowerCase().indexOf(value) > -1);
+                        }
+                    }
+                    else if (criteria == "category") {
+                    row.toggle(row.find("td:eq(2)").text().toLowerCase().indexOf(value) > -1);
+                    }
+                });
+            });
+
+            $("#sortOptions").change(function () {
+                console.log(this)
+                sortTable($(this).val());
+            });
+
+            function sortTable(sortOption) {
+                let sortColumnIndex;
+
+                if (sortOption.startsWith("name")) {
+                    sortColumnIndex = 0; 
+                } else if (sortOption.startsWith("price")) {
+                    sortColumnIndex = 1;
+                } else {
+                    return; 
+                }
+
+                var rows = $("#productsTable tbody tr").get();
+
+                rows.sort(function (a, b) {
+                    var keyA = $(a).children("td").eq(sortColumnIndex).text().trim();
+                    var keyB = $(b).children("td").eq(sortColumnIndex).text().trim();
+
+                    if (sortOption == "name_asc") {
+                        return keyA.localeCompare(keyB); 
+                    } else if (sortOption == "name_desc") {
+                        return keyB.localeCompare(keyA);
+                    } else if (sortOption == "price_asc") {
+                        return parseFloat(keyA) - parseFloat(keyB);
+                    } else if (sortOption == "price_desc") {
+                        return parseFloat(keyB) - parseFloat(keyA);
+                    }
+                });
+
+                $.each(rows, function (index, row) {
+                    $("#productsTable tbody").append(row);
+                });
+            }
+        });
+    </script>
+}

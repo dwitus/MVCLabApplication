@@ -1,0 +1,96 @@
+﻿@model IEnumerable<MVCLabApplication.Models.Category>
+
+@{
+    ViewData["Title"] = "Lista kategorii";
+}
+
+<h1>Lista kategorii</h1>
+
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+
+<!-- Search box -->
+<label for="searchBox">Search:</label>
+<input type="text" id="searchBox" placeholder="Search products..." class="form-control mb-3">
+
+<label for="sortOptions">Sortowanie:</label>
+<select id="sortOptions" class="form-control mb-3">
+    <option value="name_asc">Name (A - Z)</option>
+    <option value="name_desc">Name (Z - A)</option>
+</select>
+<table class="table" id="categoriesTable">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Name)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.Name)
+            </td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.CategoryId">Edit</a> |
+                <a asp-action="Details" asp-route-id="@item.CategoryId">Details</a> |
+                <a asp-action="Delete" asp-route-id="@item.CategoryId">Delete</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>
+
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        $(document).ready(function () {
+            $("#searchBox").on("keyup", function () {
+                var value = $(this).val().toLowerCase();
+                $("table tbody tr").filter(function () {
+                    var row = $(this);
+                    row.toggle(row.find("td:eq(0)").text().toLowerCase().indexOf(value) > -1);
+                });
+            });
+
+            $("#sortOptions").change(function () {
+                console.log(this)
+                sortTable($(this).val());
+            });
+
+            function sortTable(sortOption) {
+                let sortColumnIndex;
+
+                if (sortOption.startsWith("name")) {
+                    sortColumnIndex = 0; 
+                } else {
+                    return; 
+                }
+
+                var rows = $("#categoriesTable tbody tr").get();
+
+                rows.sort(function (a, b) {
+                    var keyA = $(a).children("td").eq(sortColumnIndex).text().trim();
+                    var keyB = $(b).children("td").eq(sortColumnIndex).text().trim();
+
+                    if (sortOption == "name_asc") {
+                        return keyA.localeCompare(keyB); 
+                    } else if (sortOption == "name_desc") {
+                        return keyB.localeCompare(keyA);
+                    }
+                });
+
+                $.each(rows, function (index, row) {
+                    $("#categoriesTable tbody").append(row);
+                });
+            }
+        });
+    </script>
+}
